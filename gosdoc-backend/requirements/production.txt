@@ -1,0 +1,8 @@
+# Production зависимости (расширяют base.txt)
+-r base.txt
+
+# Production WSGI/ASGI
+uvicorn[standard]==0.30.*
+
+# Connection pooling
+psycogreen==1.0.*
