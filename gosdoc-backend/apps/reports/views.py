@@ -75,21 +75,21 @@ class ReportDetailView(generics.RetrieveAPIView):
         ).distinct()
 
 
-class ReportExportView(APIView):
+class ReportExportView(generics.RetrieveAPIView):
     """GET /api/v1/reports/{id}/export/?format=pdf|xlsx"""
 
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MonthlyReportSerializer
 
-    def get(self, request, pk):
-        try:
-            report = MonthlyReport.objects.select_related("workspace").get(
-                pk=pk,
-                workspace__members__user=request.user,
-            )
-        except MonthlyReport.DoesNotExist:
-            return Response({"detail": "Отчёт не найден."}, status=status.HTTP_404_NOT_FOUND)
+    def get_queryset(self):
+        return MonthlyReport.objects.filter(
+            workspace__members__user=self.request.user
+        ).select_related("workspace").distinct()
 
-        export_format = request.query_params.get("format", "pdf").lower()
+    def retrieve(self, request, *args, **kwargs):
+        report = self.get_object()
+
+        export_format = request.query_params.get("file_format", "pdf").lower()
         filename = f"report_{report.period_year}_{report.period_month:02d}"
 
         if export_format == "xlsx":

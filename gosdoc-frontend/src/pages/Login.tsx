@@ -51,7 +51,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1F3864] mb-4">
             <FileText className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">ГосДок</h1>
+          <h1 className="text-2xl font-bold text-gray-900">e-doc</h1>
           <p className="text-sm text-gray-500 mt-1">Облачная платформа документооборота</p>
         </div>
 

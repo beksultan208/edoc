@@ -14,11 +14,12 @@ logger = logging.getLogger(__name__)
 @shared_task(name="apps.reports.tasks.generate_monthly_reports")
 def generate_monthly_reports():
     """
-    Генерирует ежемесячные отчёты для всех организаций.
+    Генерирует ежемесячные отчёты для всех активных кабинетов.
     Запускается Celery Beat 1-го числа каждого месяца в 00:00.
+    Раздел 2.9 ТЗ.
     """
-    from apps.organizations.models import Organization
-    from apps.reports.generators import generate_report_data
+    from apps.workspaces.models import Workspace
+    from apps.reports.generators import generate_report_data_by_workspace
     from apps.reports.models import MonthlyReport
 
     today = date.today()
@@ -28,14 +29,14 @@ def generate_monthly_reports():
     else:
         year, month = today.year, today.month - 1
 
-    organizations = Organization.objects.all()
+    workspaces = Workspace.objects.filter(status="active")
     created_count = 0
 
-    for org in organizations:
+    for ws in workspaces:
         try:
-            data = generate_report_data(str(org.id), year, month)
+            data = generate_report_data_by_workspace(str(ws.id), year, month)
             _, created = MonthlyReport.objects.update_or_create(
-                organization=org,
+                workspace=ws,
                 period_year=year,
                 period_month=month,
                 defaults=data,
@@ -43,12 +44,12 @@ def generate_monthly_reports():
             if created:
                 created_count += 1
         except Exception as exc:
-            logger.error("Ошибка генерации отчёта для %s: %s", org.name, exc)
+            logger.error("Ошибка генерации отчёта для кабинета %s: %s", ws.title, exc)
 
     logger.info(
-        "Ежемесячные отчёты сгенерированы: %d/%d организаций (%s/%s)",
+        "Ежемесячные отчёты сгенерированы: %d/%d кабинетов (%s/%s)",
         created_count,
-        organizations.count(),
+        workspaces.count(),
         month,
         year,
     )

@@ -308,6 +308,34 @@ LOGGING = {
 }
 
 # ============================================================
+# Sentry — мониторинг ошибок (раздел 6 ТЗ, критерий приёмки №12)
+# ============================================================
+SENTRY_DSN = config("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(
+                transaction_style="url",
+                middleware_spans=True,
+            ),
+            CeleryIntegration(),
+        ],
+        # Процент трассировок производительности (0.1 = 10%)
+        traces_sample_rate=config("SENTRY_TRACES_SAMPLE_RATE", default=0.1, cast=float),
+        # Среда: development / staging / production
+        environment=config("DJANGO_ENVIRONMENT", default="development"),
+        # Не отправляем PII (email, IP) в Sentry (GDPR)
+        send_default_pii=False,
+        # Версия приложения для группировки ошибок
+        release="gosdoc@1.0.0",
+    )
+
+# ============================================================
 # Максимальный размер загружаемого файла: 100 МБ (раздел 2.5 ТЗ)
 # ============================================================
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104_857_600   # 100 МБ

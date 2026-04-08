@@ -207,3 +207,84 @@ class Comment(models.Model):
 
     def __str__(self) -> str:
         return f"Комментарий {self.author} к {self.document}"
+
+
+class DocumentAuditLog(models.Model):
+    """
+    Аудит-лог действий с документами.
+    Раздел 6 ТЗ: «Логирование всех действий с документами (аудит-лог)».
+
+    Записывает: кто, что и когда сделал с документом.
+    Поля:
+    - id: UUID PK
+    - document: FK → documents
+    - user: FK → users (кто совершил действие)
+    - action: тип действия
+    - details: JSONB с дополнительными данными
+    - ip_address: IP-адрес инициатора
+    - timestamp: время действия
+    """
+
+    class Action(models.TextChoices):
+        CREATED = "created", "Создан"
+        UPDATED = "updated", "Обновлён"
+        ARCHIVED = "archived", "Архивирован"
+        WORKFLOW_STARTED = "workflow_started", "Workflow запущен"
+        SIGNED = "signed", "Подписан"
+        VERSION_UPLOADED = "version_uploaded", "Версия загружена"
+        COMMENT_ADDED = "comment_added", "Комментарий добавлен"
+        DOWNLOADED = "downloaded", "Скачан"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="audit_logs",
+        verbose_name="Документ",
+        db_index=True,
+    )
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="document_audit_logs",
+        verbose_name="Пользователь",
+        db_index=True,
+    )
+    action = models.CharField(
+        max_length=50,
+        choices=Action.choices,
+        verbose_name="Действие",
+        db_index=True,
+    )
+    details = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name="Детали",
+        help_text="Дополнительные данные о действии в формате JSONB",
+    )
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        verbose_name="IP-адрес",
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Время действия",
+        db_index=True,
+    )
+
+    class Meta:
+        verbose_name = "Аудит-лог документа"
+        verbose_name_plural = "Аудит-логи документов"
+        db_table = "document_audit_logs"
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["document"]),
+            models.Index(fields=["user"]),
+            models.Index(fields=["action"]),
+            models.Index(fields=["timestamp"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_action_display()} | {self.document} | {self.user}"

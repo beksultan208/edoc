@@ -23,7 +23,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.workspaces.models import Workspace, WorkspaceMember
-from .models import Comment, Document, DocumentVersion
+from .audit_log import get_client_ip, log_document_action
+from .models import Comment, Document, DocumentAuditLog, DocumentVersion
 from .serializers import (
     CommentSerializer,
     DocumentConfirmUploadSerializer,
@@ -234,6 +235,15 @@ class DocumentListCreateView(generics.ListCreateAPIView):
             document.title, workspace.id,
         )
 
+        # Аудит-лог: документ создан (раздел 6 ТЗ)
+        log_document_action(
+            document=document,
+            user=request.user,
+            action=DocumentAuditLog.Action.CREATED,
+            details={"title": document.title, "workspace": str(workspace.id)},
+            ip_address=get_client_ip(request),
+        )
+
         return Response(
             DocumentSerializer(document, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
@@ -273,6 +283,15 @@ class DocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
         document.status = Document.DocumentStatus.ARCHIVED
         document.save(update_fields=["status", "updated_at"])
         logger.info("Документ архивирован: %s (by %s)", document.title, request.user.email)
+
+        # Аудит-лог: документ архивирован (раздел 6 ТЗ)
+        log_document_action(
+            document=document,
+            user=request.user,
+            action=DocumentAuditLog.Action.ARCHIVED,
+            details={"title": document.title},
+            ip_address=get_client_ip(request),
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -451,6 +470,15 @@ class DocumentVersionCreateView(APIView):
             new_version_number, document.title, request.user.email,
         )
 
+        # Аудит-лог: версия загружена (раздел 6 ТЗ)
+        log_document_action(
+            document=document,
+            user=request.user,
+            action=DocumentAuditLog.Action.VERSION_UPLOADED,
+            details={"version_number": new_version_number, "storage_key": storage_key},
+            ip_address=get_client_ip(request),
+        )
+
         return Response(DocumentVersionSerializer(version).data, status=status.HTTP_201_CREATED)
 
 
@@ -544,6 +572,15 @@ class DocumentWorkflowStartView(APIView):
         logger.info(
             "Workflow запущен для документа '%s': %d задач (by %s)",
             document.title, len(tasks), request.user.email,
+        )
+
+        # Аудит-лог: workflow запущен (раздел 6 ТЗ)
+        log_document_action(
+            document=document,
+            user=request.user,
+            action=DocumentAuditLog.Action.WORKFLOW_STARTED,
+            details={"tasks_created": len(tasks)},
+            ip_address=get_client_ip(request),
         )
 
         return Response({
