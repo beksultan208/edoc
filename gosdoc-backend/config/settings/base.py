@@ -43,6 +43,7 @@ THIRD_PARTY_APPS = [
     "storages",
     "drf_spectacular",
     "django_celery_beat",   # Планировщик Celery Beat (хранит расписание в БД)
+    "pgvector",             # PostgreSQL векторное расширение (pgvector)
 ]
 
 LOCAL_APPS = [
@@ -55,6 +56,7 @@ LOCAL_APPS = [
     "apps.signatures",
     "apps.notifications",
     "apps.reports",
+    "apps.ai",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -244,10 +246,10 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="ГосДок <noreply@gosdoc.gov.kz>")
 
 # ============================================================
-# OpenAI / LLM (AI-модуль)
+# Google Gemini (AI-модуль)
 # ============================================================
-OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
-OPENAI_MODEL = config("OPENAI_MODEL", default="gpt-4o-mini")
+GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
+GEMINI_MODEL = config("GEMINI_MODEL", default="gemini-2.0-flash")
 
 # ============================================================
 # CORS (раздел 6 ТЗ: только доверенные домены)

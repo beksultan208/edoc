@@ -22,13 +22,16 @@ WORKDIR /app
 
 # Копируем зависимости отдельно (кэш Docker)
 COPY requirements/ requirements/
-RUN pip install --no-cache-dir -r requirements/base.txt
+RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements/base.txt
 
 # Копируем исходный код
 COPY . .
 
-# Создаём непривилегированного пользователя
-RUN addgroup --system gosdoc && adduser --system --ingroup gosdoc gosdoc
+# Создаём непривилегированного пользователя с домашней директорией
+RUN addgroup --system gosdoc && adduser --system --home /home/gosdoc --ingroup gosdoc gosdoc
+
+# Кэш для sentence-transformers / HuggingFace моделей
+RUN mkdir -p /home/gosdoc/.cache && chown -R gosdoc:gosdoc /home/gosdoc
 RUN chown -R gosdoc:gosdoc /app
 USER gosdoc
 
@@ -36,7 +39,9 @@ USER gosdoc
 ENV DJANGO_SETTINGS_MODULE=config.settings.production \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    HF_HOME=/home/gosdoc/.cache/huggingface \
+    SENTENCE_TRANSFORMERS_HOME=/home/gosdoc/.cache/sentence-transformers
 
 EXPOSE 8000
 
@@ -45,8 +50,9 @@ CMD ["sh", "-c", "python manage.py migrate --noinput && \
      python manage.py collectstatic --noinput && \
      gunicorn config.wsgi:application \
        --bind 0.0.0.0:${PORT} \
-       --workers 4 \
-       --worker-class sync \
+       --workers 2 \
+       --worker-class gthread \
+       --threads 8 \
        --timeout 120 \
        --access-logfile - \
        --error-logfile -"]

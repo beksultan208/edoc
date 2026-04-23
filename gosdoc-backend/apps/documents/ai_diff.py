@@ -4,7 +4,7 @@
 1. Извлечение текста (PDF→PyMuPDF, DOCX→python-docx)
 2. Сравнение версий через difflib
 3. Классификация: добавление, удаление, замена, форматирование
-4. Резюме на русском через OpenAI
+4. Резюме на русском через Anthropic Claude
 5. Сохранение в ai_diff_summary (JSONB)
 """
 
@@ -87,38 +87,19 @@ def compute_diff(old_text: str, new_text: str) -> dict:
 
 def generate_ai_summary(diff_data: dict, old_text: str, new_text: str) -> Optional[str]:
     """
-    Генерирует краткое резюме изменений через OpenAI API.
+    Генерирует краткое резюме изменений через Anthropic Claude API.
     Возвращает строку с резюме или None при ошибке.
     """
-    if not settings.OPENAI_API_KEY:
+    if not settings.GEMINI_API_KEY:
         return None
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
-        prompt = (
-            f"Проанализируй изменения в документе:\n"
-            f"- Добавлено строк: {diff_data['additions_count']}\n"
-            f"- Удалено строк: {diff_data['deletions_count']}\n"
-            f"Примеры добавленных фрагментов: {diff_data['additions_sample']}\n"
-            f"Примеры удалённых фрагментов: {diff_data['deletions_sample']}\n\n"
-            f"Напиши краткое (2-3 предложения) резюме изменений на русском языке."
-        )
-
-        response = client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
-            messages=[
-                {"role": "system", "content": "Ты — ассистент для анализа изменений в официальных документах."},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=300,
-            temperature=0.3,
-        )
-        return response.choices[0].message.content.strip()
+        from apps.ai.services import AIService
+        ai = AIService()
+        return ai.analyze_diff(old_text, new_text)
 
     except Exception as exc:
-        logger.error("Ошибка OpenAI API: %s", exc)
+        logger.error("Ошибка Google Gemini API: %s", exc)
         return None
 
 

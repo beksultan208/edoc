@@ -9,9 +9,10 @@ import { Header } from './Header'
 interface LayoutProps {
   children: ReactNode
   title?: string
+  noPadding?: boolean
 }
 
-export function Layout({ children, title }: LayoutProps) {
+export function Layout({ children, title, noPadding }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -22,7 +23,7 @@ export function Layout({ children, title }: LayoutProps) {
       {/* Основное содержимое */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} title={title} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className={`flex-1 overflow-y-auto ${noPadding ? '' : 'p-4 sm:p-6'}`}>
           {children}
         </main>
       </div>

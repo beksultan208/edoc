@@ -22,9 +22,13 @@ export const apiClient = axios.create({
 })
 
 // ---- Request interceptor: добавляем Authorization header ----
+// Не отправляем токен на публичные auth-эндпоинты (register, login, verify-email и т.д.)
+const PUBLIC_AUTH_PATHS = ['/auth/register/', '/auth/login/', '/auth/verify-email/', '/auth/resend-code/', '/auth/password/reset/', '/auth/password/reset/confirm/']
+
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const isPublicAuth = PUBLIC_AUTH_PATHS.some((p) => config.url?.includes(p))
   const token = localStorage.getItem(TOKEN_KEYS.access)
-  if (token && config.headers) {
+  if (token && config.headers && !isPublicAuth) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config

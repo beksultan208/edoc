@@ -11,7 +11,7 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import {
   Download, Play, PenLine, MessageSquare, History,
-  Sparkles, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Plus,
+  Sparkles, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Plus, BotMessageSquare,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Layout } from '@/components/layout/Layout'
@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { DocumentStatusBadge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { SignatureCanvas } from '@/components/signatures/SignatureCanvas'
+import { ChatPanel } from '@/components/ai/ChatPanel'
 import {
   getDocument,
   getDocumentVersions,
@@ -37,6 +38,7 @@ export default function DocumentView() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [signOpen, setSignOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'info' | 'versions' | 'comments' | 'signatures'>('info')
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
 
@@ -113,6 +115,9 @@ export default function DocumentView() {
 
   return (
     <Layout>
+      <div className="flex gap-0 -m-4 sm:-m-6">
+      {/* Основной контент документа */}
+      <div className="flex-1 min-w-0 p-4 sm:p-6">
       {/* Breadcrumb */}
       <button
         onClick={() => navigate(-1)}
@@ -184,6 +189,16 @@ export default function DocumentView() {
                 </Button>
               </>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setChatOpen(!chatOpen)}
+              className={chatOpen ? 'border-purple-300 text-purple-700 bg-purple-50' : ''}
+            >
+              <Sparkles className="h-4 w-4" />
+              AI Ассистент
+            </Button>
           </div>
         </div>
       </div>
@@ -339,6 +354,16 @@ export default function DocumentView() {
         onClose={() => setSignOpen(false)}
         onSigned={() => queryClient.invalidateQueries({ queryKey: ['document', id] })}
       />
+      </div>
+
+      {/* AI Chat Panel */}
+      <ChatPanel
+        documentId={id!}
+        documentTitle={document.title}
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+      />
+      </div>
     </Layout>
   )
 }

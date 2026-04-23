@@ -69,6 +69,12 @@ class Document(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Метаданные",
+        help_text="Произвольные метаданные документа (классификация AI и т.п.)",
+    )
 
     class Meta:
         verbose_name = "Документ"

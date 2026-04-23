@@ -16,6 +16,7 @@ import Documents from '@/pages/Documents'
 import DocumentView from '@/pages/DocumentView'
 import Tasks from '@/pages/Tasks'
 import Reports from '@/pages/Reports'
+import AIChat from '@/pages/AIChat'
 
 // Protected route — редиректим на /login, если нет JWT
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -78,6 +79,10 @@ export default function App() {
       <Route
         path="/reports"
         element={<ProtectedRoute><Reports /></ProtectedRoute>}
+      />
+      <Route
+        path="/ai-chat"
+        element={<ProtectedRoute><AIChat /></ProtectedRoute>}
       />
 
       {/* Редиректы */}

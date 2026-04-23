@@ -9,6 +9,7 @@ import {
   FileText,
   CheckSquare,
   BarChart2,
+  Sparkles,
   LogOut,
   X,
 } from 'lucide-react'
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { to: '/documents', icon: FileText, label: 'Документы' },
   { to: '/tasks', icon: CheckSquare, label: 'Задачи' },
   { to: '/reports', icon: BarChart2, label: 'Отчёты' },
+  { to: '/ai-chat', icon: Sparkles, label: 'AI Ассистент' },
 ]
 
 interface SidebarProps {
